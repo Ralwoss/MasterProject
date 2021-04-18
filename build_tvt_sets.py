@@ -6,10 +6,11 @@ TRAINCHORMS = ['chr5', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr1
 VALCHROMS = ['chr1', 'chr3', 'chr7']
 TESTCHROMS = ['chr2', 'chr4', 'chr6']
 
+#split data in training, validation and testset, still hardcoded split of chromosomes
 def build_tvt(verbose=False):
     # load data
     data, labels = load.load_data()
-    # construct test set
+    # construct training set
     xtrain = []
     ytrain = []
     for chr in TRAINCHORMS:
