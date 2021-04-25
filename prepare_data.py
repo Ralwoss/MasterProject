@@ -5,98 +5,82 @@ import math
 import h5py
 import pickle as pick
 
-filepath_cool = 'data/GM12878-MboI-allreps-filtered.10kb.cool'
-filepath_bound = 'data/GM12878-MboI-allreps-filtered-TAD-domains.bed'
-step = 5
-overlap = 0
-binsize = 10000
-offset = 0
 
-c = cool.Cooler(filepath_cool)
-numberbins = []
-arr = c.matrix(balance=False)
+def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size, overlap_size):
+    filepath_cool = filepath_hicmatrix
+    filepath_bound = filepath_TAD_domains
+    step = window_size
+    overlap = overlap_size
+    binsize = binsize
+    offset = 0 #how far start point is moved because of chromosome concatenating in hicmatrix
 
-#compute nr bins per chromosome
-for chromsize in c.chromsizes:
-    numberbins.append(math.ceil(chromsize / binsize))
+    #load hicmatrix
+    c = cool.Cooler(filepath_cool)
+    numberbins = [] # list of number of bins for each chromosome
+    arr = c.matrix(balance=False)
 
-submats = {}
-boundaries = {}
-with open(filepath_bound, 'r') as f:
-    for line in f: #get boundaries bins
-        cont = line.strip().split()
-        if cont[0] not in boundaries:
-            boundaries[cont[0]] = []
-        boundaries[cont[0]].append((int(cont[1]) / binsize, int(cont[2]) / binsize))
+    #compute nr of bins per chromosome
+    for chromsize in c.chromsizes:
+        numberbins.append(math.ceil(chromsize / binsize))
 
-#print(boundaries[0])
-
-chrcount = 0
-labels = {}
-for number in numberbins:
-    chrom = c.chromnames[chrcount]
-    print('Chromname: ' + chrom)
-    #print(c.chromsizes)
-    try:#try to get the boundaries of the chromosome if chromosome has boundaries
-        chrbounds = boundaries[chrom]
-    except:
-        continue
+    #dictionaries for submats/boundaries (key:chromosome, value:list of submats/boundaries)
+    submats = {}
+    boundaries = {}
+    #extract boundaries from TAD_domains.bed
+    with open(filepath_bound, 'r') as f:
+        for line in f: #get boundaries bins
+            cont = line.strip().split()
+            if cont[0] not in boundaries:
+                boundaries[cont[0]] = []
+            boundaries[cont[0]].append((int(cont[1]) / binsize, int(cont[2]) / binsize))
 
 
-    labels[chrom] = []
-    #new start and end position depending on last positions, step and overlap sizes
-    start = offset
-    end = start + step
-    submat = []
-    bcount = 0
+    chrcount = 0
+    labels = {}
+    #go through every chromosome and compute submatrices
+    for number in numberbins:
+        chrom = c.chromnames[chrcount]
+        print('Chromname: ' + chrom)
+        try:#try to get the boundaries of the chromosome if chromosome has boundaries
+            chrbounds = boundaries[chrom]
+        except:#if no boundaries, skip chromosome
+            continue
 
-    while end <= number + offset:
-        while chrbounds[bcount][1] < start - offset:
-            try:
-                chrbounds[bcount+1][0]
-                bcount += 1
+        labels[chrom] = []
+        #new start and end position depending on last positions, step and overlap sizes
+        start = offset
+        end = start + step
+        submat = []
+        bcount = 0
+        #go trough hicmatrix and build submatrix with corresponding boundaries flag
+        while end <= number + offset:
+            #while next boundary is before the start of the next window, got to the next boundary
+            while chrbounds[bcount][1] < start - offset:
+                #tries if there is another boundary, if not break
+                try:
+                    chrbounds[bcount+1][0]
+                    bcount += 1
 
-            except:
-                break
+                except:
+                    break
 
-        #checks if the next boundary is in the current window
-        if start - offset <= chrbounds[bcount][0] < end - offset \
-                or start - offset <= chrbounds[bcount][1] < end - offset:
-            labels[chrom].append(1)
-        else:
-            labels[chrom].append(0)
-        submat.append(arr[start:end, start:end])
-        start, end = start + step - overlap, end + step - overlap
-    offset = offset + number #computes new offset for next window
-    #print(submat[0:5])
-    submats[chrom] = submat
-    chrcount += 1
-    #print(chrbounds)
-    print()
-    #print(labels)
+            #checks if the next boundary is in the current window and set labels
+            if start - offset <= chrbounds[bcount][0] < end - offset \
+                    or start - offset <= chrbounds[bcount][1] < end - offset:
+                labels[chrom].append(1)
+            else:
+                labels[chrom].append(0)
+            submat.append(arr[start:end, start:end])
+            start, end = start + step - overlap, end + step - overlap
+        offset = offset + number #computes new offset for chromosome
+        submats[chrom] = submat
+        chrcount += 1
+        print()
 
-pick.dump(submats, open('data/InteractionMatrices_5_0_10kb', 'wb'))
-pick.dump(labels, open('data/labels_5_0_10kb', 'wb'))
+    #save interaction matrices and corresponding labels
+    pick.dump(submats, open('preparations/InteractionMatrices_'+ str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize), 'wb'))
+    pick.dump(labels, open('preparations/labels_'+ str(window_size)+'_'+ str(overlap_size)+ '_'+str(binsize), 'wb'))
 
-
-# arr = c.matrix(balance=False,sparse=True)
-# shape = arr.shape
-# print(shape)
-# submatrices = arr[0:step, 0:step]
-#
-# start = step - overlap
-# end = start + step
-# while end <= arr.shape[0]:
-#     submatrices = np.concatenate((submatrices, arr[start:end, start:end]),axis=0)
-#     start, end = start + step-overlap, end + step - overlap
-# print(submatrices.shape)
-
-# print(c.matrix(balance=False)[0:1000, 0:1000])
-
-
-# def main():
-#    return
-
-
-# if __name__ == '__main__' :
-#    main()
+if __name__ == "__main__":
+    prepare_data("data/GM12878-MboI-allreps-filtered.10kb.cool", "data/GM12878-MboI-allreps-filtered-TAD-domains.bed",
+                 10000, 10, 0)

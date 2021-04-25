@@ -29,7 +29,7 @@ METRICS = [
 
       tf.keras.metrics.AUC(name='auc')
 ]
-
+#build training, validation and test datasets
 tvt = build_tvt_sets.build_tvt()
 
 xtrain, ytrain = tvt[0]
@@ -48,7 +48,7 @@ if verbose: print(weights)
 
 initbias=tf.keras.initializers.Constant(np.log([onecount/zerocount]))
 
-
+#build a model
 model = tf.keras.Sequential([
                              tf.keras.layers.Flatten(input_shape=(5,5)),
                              tf.keras.layers.BatchNormalization(),
@@ -59,11 +59,15 @@ model = tf.keras.Sequential([
                              tf.keras.layers.Dense(1, activation='sigmoid', bias_initializer=initbias)
 ])
 
+#compile the model
 model.compile(optimizer='adam',
               loss='binary_crossentropy',
               metrics=METRICS)
-
+#fit the model
 model.fit(x=xtrain, y=ytrain, epochs = 100, class_weight=weights)
 
+#evaluate the validation set
 model.evaluate(xval, yval, verbose=2)
+
+#save the model
 model.save("model/5_0_10kb_batch_normalized.h5")
