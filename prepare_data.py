@@ -2,7 +2,7 @@ import numpy as np
 import os.path as op
 import cooler as cool
 import math
-import h5py
+import os
 import pickle as pick
 
 
@@ -12,7 +12,12 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
     step = window_size
     overlap = overlap_size
     binsize = binsize
+    save_preparation_id = str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize)
     offset = 0 #how far start point is moved because of chromosome concatenating in hicmatrix
+    if not os.path.exists("preparations"):
+        os.mkdir("preparations")
+    if not os.path.exists(os.path.join("preparations", save_preparation_id)):
+        os.mkdir(os.path.join("preparations", save_preparation_id))
 
     #load hicmatrix
     c = cool.Cooler(filepath_cool)
@@ -76,10 +81,10 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
         submats[chrom] = submat
         chrcount += 1
         print()
-
     #save interaction matrices and corresponding labels
-    pick.dump(submats, open('preparations/'+ str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize)+'/InteractionMatrices' , 'wb'))
-    pick.dump(labels, open('preparations/' + str(window_size)+'_'+ str(overlap_size)+ '_'+str(binsize) + '/labels', 'wb'))
+
+    pick.dump(submats, open('preparations/'+ save_preparation_id +'/InteractionMatrices' , 'wb'))
+    pick.dump(labels, open('preparations/' + save_preparation_id + '/labels', 'wb'))
 
 if __name__ == "__main__":
     prepare_data("data/GM12878-MboI-allreps-filtered.10kb.cool", "data/GM12878-MboI-allreps-filtered-TAD-domains.bed",
