@@ -78,8 +78,8 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
         print()
 
     #save interaction matrices and corresponding labels
-    pick.dump(submats, open('preparations/InteractionMatrices_'+ str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize), 'wb'))
-    pick.dump(labels, open('preparations/labels_'+ str(window_size)+'_'+ str(overlap_size)+ '_'+str(binsize), 'wb'))
+    pick.dump(submats, open('preparations/'+ str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize)+'/InteractionMatrices' , 'wb'))
+    pick.dump(labels, open('preparations/' + str(window_size)+'_'+ str(overlap_size)+ '_'+str(binsize) + '/labels', 'wb'))
 
 if __name__ == "__main__":
     prepare_data("data/GM12878-MboI-allreps-filtered.10kb.cool", "data/GM12878-MboI-allreps-filtered-TAD-domains.bed",

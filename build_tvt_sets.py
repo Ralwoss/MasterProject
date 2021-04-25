@@ -9,7 +9,7 @@ TESTCHROMS = ['chr2', 'chr4', 'chr6']
 #split data in training, validation and testset, still hardcoded split of chromosomes
 def build_tvt(verbose=False):
     # load data
-    data, labels = load.load_data()
+    data, labels = load.load_data("preparations/10_0_10000/InteractionMatrices", "preparations/10_0_10000/labels")
     # construct training set
     xtrain = []
     ytrain = []

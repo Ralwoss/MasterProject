@@ -50,7 +50,7 @@ initbias=tf.keras.initializers.Constant(np.log([onecount/zerocount]))
 
 #build a model
 model = tf.keras.Sequential([
-                             tf.keras.layers.Flatten(input_shape=(5,5)),
+                             tf.keras.layers.Flatten(input_shape=(10,10)),
                              tf.keras.layers.BatchNormalization(),
                              tf.keras.layers.Dense(256, activation='elu'),
                              tf.keras.layers.Dropout(0.2),
