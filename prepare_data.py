@@ -75,8 +75,8 @@ for number in numberbins:
     print()
     #print(labels)
 
-pick.dump(submats, open('InteractionMatrices_5_0_10kb', 'wb'))
-pick.dump(labels, open('labels_5_0_10kb', 'wb'))
+pick.dump(submats, open('data/InteractionMatrices_5_0_10kb', 'wb'))
+pick.dump(labels, open('data/labels_5_0_10kb', 'wb'))
 
 
 # arr = c.matrix(balance=False,sparse=True)

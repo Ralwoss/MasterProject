@@ -8,7 +8,7 @@ TESTCHROMS = ['chr2', 'chr4', 'chr6']
 
 def build_tvt(verbose=False):
     # load data
-    data, labels = load.load_data()
+    data, labels = load.load_data("preparations/InteractionMatrices_5_0_10kb", "preparations/labels_5_0_10kb")
     # construct test set
     xtrain = []
     ytrain = []
