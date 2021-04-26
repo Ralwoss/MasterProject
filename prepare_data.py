@@ -2,11 +2,13 @@ import numpy as np
 import os.path as op
 import cooler as cool
 import math
-import os
 import pickle as pick
+from os.path import exists as pexists
+from os.path import join as pjoin
+from os import mkdir
 
 
-def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size, overlap_size):
+def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size, overlap_size, heatmap=True):
     filepath_cool = filepath_hicmatrix
     filepath_bound = filepath_TAD_domains
     step = window_size
@@ -14,19 +16,26 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
     binsize = binsize
     save_preparation_id = str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize)
     offset = 0 #how far start point is moved because of chromosome concatenating in hicmatrix
-    if not os.path.exists("preparations"):
-        os.mkdir("preparations")
-    if not os.path.exists(os.path.join("preparations", save_preparation_id)):
-        os.mkdir(os.path.join("preparations", save_preparation_id))
+    #make directories to save preparations
+    if not pexists("preparations"):
+        mkdir("preparations")
+    if not pexists(pjoin("preparations", save_preparation_id)):
+        mkdir(pjoin("preparations", save_preparation_id))
+    if not pexists(pjoin(pjoin("preparations", save_preparation_id), "heatmaps")):
+        mkdir(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"))
 
     #load hicmatrix
     c = cool.Cooler(filepath_cool)
     numberbins = [] # list of number of bins for each chromosome
     arr = c.matrix(balance=False)
 
+
+
     #compute nr of bins per chromosome
     for chromsize in c.chromsizes:
         numberbins.append(math.ceil(chromsize / binsize))
+
+
 
     #dictionaries for submats/boundaries (key:chromosome, value:list of submats/boundaries)
     submats = {}
@@ -39,16 +48,19 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
                 boundaries[cont[0]] = []
             boundaries[cont[0]].append((int(cont[1]) / binsize, int(cont[2]) / binsize))
 
-
     chrcount = 0
     labels = {}
     #go through every chromosome and compute submatrices
     for number in numberbins:
         chrom = c.chromnames[chrcount]
+        if heatmap:
+            hmmatrix = np.zeros((number,number))
+            print(hmmatrix.shape)
         print('Chromname: ' + chrom)
         try:#try to get the boundaries of the chromosome if chromosome has boundaries
             chrbounds = boundaries[chrom]
         except:#if no boundaries, skip chromosome
+            chrcount+=1
             continue
 
         labels[chrom] = []
@@ -76,11 +88,20 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
             else:
                 labels[chrom].append(0)
             submat.append(arr[start:end, start:end])
+            if heatmap and not pexists(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom)):
+                hmmatrix[start-offset:end-offset, start-offset:end-offset] = arr[start:end, start:end]
+
+
+
             start, end = start + step - overlap, end + step - overlap
         offset = offset + number #computes new offset for chromosome
         submats[chrom] = submat
         chrcount += 1
         print()
+        if heatmap and not pexists(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom)):
+            pick.dump(hmmatrix, open(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom),'wb'))
+
+
     #save interaction matrices and corresponding labels
 
     pick.dump(submats, open('preparations/'+ save_preparation_id +'/InteractionMatrices' , 'wb'))
