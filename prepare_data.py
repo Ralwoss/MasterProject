@@ -8,12 +8,14 @@ from os.path import join as pjoin
 from os import mkdir
 
 
-def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size, overlap_size, heatmap=True):
+def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size, overlap_size, heatmap=True, write_windows = False):
     filepath_cool = filepath_hicmatrix
     filepath_bound = filepath_TAD_domains
+    write_windows = write_windows
     step = window_size
     overlap = overlap_size
     binsize = binsize
+    windows = None
     save_preparation_id = str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize)
     offset = 0 #how far start point is moved because of chromosome concatenating in hicmatrix
     #make directories to save preparations
@@ -23,6 +25,14 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
         mkdir(pjoin("preparations", save_preparation_id))
     if not pexists(pjoin(pjoin("preparations", save_preparation_id), "heatmaps")):
         mkdir(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"))
+    if not pexists(pjoin(pjoin("preparations", save_preparation_id), "windows.bed")):
+        write_windows = True
+
+    #begin bedfile with window boundaries
+    if(write_windows):
+        windows = open(pjoin(pjoin("preparations", save_preparation_id), "windows.bed"), "w")
+        windows.write("chrom\tchromStart\tchromEnd\n")
+
 
     #load hicmatrix
     c = cool.Cooler(filepath_cool)
@@ -71,6 +81,7 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
         bcount = 0
         #go trough hicmatrix and build submatrix with corresponding boundaries flag
         while end <= number + offset:
+
             #while next boundary is before the start of the next window, got to the next boundary
             while chrbounds[bcount][1] < start - offset:
                 #tries if there is another boundary, if not break
@@ -90,9 +101,8 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
             submat.append(arr[start:end, start:end])
             if heatmap and not pexists(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom)):
                 hmmatrix[start-offset:end-offset, start-offset:end-offset] = arr[start:end, start:end]
-
-
-
+            if (write_windows):
+                windows.write(chrom + "\t" + str((start - offset)*binsize) + "\t" + str((end - offset)*binsize) + "\n")
             start, end = start + step - overlap, end + step - overlap
         offset = offset + number #computes new offset for chromosome
         submats[chrom] = submat
@@ -103,10 +113,11 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, binsize, window_size,
 
 
     #save interaction matrices and corresponding labels
-
     pick.dump(submats, open('preparations/'+ save_preparation_id +'/InteractionMatrices' , 'wb'))
     pick.dump(labels, open('preparations/' + save_preparation_id + '/labels', 'wb'))
+    if(write_windows):
+        windows.close()
 
 if __name__ == "__main__":
     prepare_data("data/GM12878-MboI-allreps-filtered.10kb.cool", "data/GM12878-MboI-allreps-filtered-TAD-domains.bed",
-                 10000, 10, 0)
+                 10000, 25, 5)
