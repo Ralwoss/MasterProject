@@ -63,9 +63,7 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size
     #go through every chromosome and compute submatrices
     for number in numberbins:
         chrom = c.chromnames[chrcount]
-        if heatmap:
-            hmmatrix = np.zeros((number,number))
-            print(hmmatrix.shape)
+
         print('Chromname: ' + chrom)
         try:#try to get the boundaries of the chromosome if chromosome has boundaries
             chrbounds = boundaries[chrom]
@@ -99,8 +97,6 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size
             else:
                 labels[chrom].append(0)
             submat.append(arr[start:end, start:end])
-            if heatmap and not pexists(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom)):
-                hmmatrix[start-offset:end-offset, start-offset:end-offset] = arr[start:end, start:end]
             if (write_windows):
                 windows.write(chrom + "\t" + str((start - offset)*binsize) + "\t" + str((end - offset)*binsize) + "\n")
             start, end = start + step - overlap, end + step - overlap
@@ -108,8 +104,6 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size
         submats[chrom] = submat
         chrcount += 1
         print()
-        if heatmap and not pexists(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom)):
-            pick.dump(hmmatrix, open(pjoin(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"), chrom),'wb'))
 
 
     #save interaction matrices and corresponding labels
