@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import load_data as load
+import parameters
 
 TRAINCHORMS = ['chr5', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX']
 VALCHROMS = ['chr1', 'chr3', 'chr7']
@@ -9,7 +10,7 @@ TESTCHROMS = ['chr2', 'chr4', 'chr6']
 #split data in training, validation and testset, still hardcoded split of chromosomes
 def build_tvt(verbose=False):
     # load data
-    data, labels = load.load_data("preparations/10_0_10000/InteractionMatrices", "preparations/10_0_10000/labels")
+    data, labels = load.load_data(parameters.interaction_matrices, parameters.labels)
     # construct training set
     xtrain = []
     ytrain = []

@@ -2,6 +2,7 @@ import load_model
 import build_tvt_sets
 import numpy as np
 import matplotlib.pyplot as plt
+import parameters
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
@@ -21,4 +22,4 @@ def build_confusion_matrix(model):
     plt.show()
 
 if __name__ == "__main__":
-    build_confusion_matrix(load_model.load_model("model/5_0_10kb_batch_normalized.h5"))
+    build_confusion_matrix(load_model.load_model(parameters.model))

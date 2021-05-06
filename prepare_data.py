@@ -6,31 +6,30 @@ import pickle as pick
 from os.path import exists as pexists
 from os.path import join as pjoin
 from os import mkdir
+import parameters
 
 
-def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size, overlap_size, heatmap=True, write_windows = False):
+def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows = False, save_suffix=""):
     filepath_cool = filepath_hicmatrix
     filepath_bound = filepath_TAD_domains
     write_windows = write_windows
-    step = window_size
-    overlap = overlap_size
-    binsize = binsize
+    step = parameters.window_size
+    overlap = parameters.overlap_size
+    binsize = parameters.binsize
     windows = None
-    save_preparation_id = str(window_size)+'_'+ str(overlap_size)+'_'+ str(binsize)
+
     offset = 0 #how far start point is moved because of chromosome concatenating in hicmatrix
     #make directories to save preparations
     if not pexists("preparations"):
         mkdir("preparations")
-    if not pexists(pjoin("preparations", save_preparation_id)):
-        mkdir(pjoin("preparations", save_preparation_id))
-    if not pexists(pjoin(pjoin("preparations", save_preparation_id), "heatmaps")):
-        mkdir(pjoin(pjoin("preparations", save_preparation_id), "heatmaps"))
-    if not pexists(pjoin(pjoin("preparations", save_preparation_id), "windows.bed")):
+    if not pexists(pjoin("preparations", parameters.save_preparation_id)):
+        mkdir(pjoin("preparations", parameters.save_preparation_id))
+    if not pexists(pjoin(pjoin("preparations", parameters.save_preparation_id), "windows.bed")):
         write_windows = True
 
     #begin bedfile with window boundaries
     if(write_windows):
-        windows = open(pjoin(pjoin("preparations", save_preparation_id), "windows.bed"), "w")
+        windows = open(pjoin(pjoin("preparations", parameters.save_preparation_id), "windows.bed"), "w")
         windows.write("chrom\tchromStart\tchromEnd\n")
 
 
@@ -91,8 +90,7 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size
                     break
 
             #checks if the next boundary is in the current window and set labels
-            if start - offset <= chrbounds[bcount][0] < end - offset \
-                    or start - offset <= chrbounds[bcount][1] < end - offset:
+            if start + (end-start)/2 == chrbounds[bcount][0]:
                 labels[chrom].append(1)
             else:
                 labels[chrom].append(0)
@@ -107,11 +105,10 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains,  binsize, window_size
 
 
     #save interaction matrices and corresponding labels
-    pick.dump(submats, open('preparations/'+ save_preparation_id +'/InteractionMatrices' , 'wb'))
-    pick.dump(labels, open('preparations/' + save_preparation_id + '/labels', 'wb'))
+    pick.dump(submats, open('preparations/'+ parameters.save_preparation_id +'/InteractionMatrices' , 'wb'))
+    pick.dump(labels, open('preparations/' + parameters.save_preparation_id + '/labels', 'wb'))
     if(write_windows):
         windows.close()
 
 if __name__ == "__main__":
-    prepare_data("data/GM12878-MboI-allreps-filtered.10kb.cool", "data/GM12878-MboI-allreps-filtered-TAD-domains.bed",
-                 10000, 25, 5)
+    prepare_data(parameters.hic_matrix, parameters.TAD_domains, "center")

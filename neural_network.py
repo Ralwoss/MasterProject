@@ -3,6 +3,7 @@ import load_data as load
 import build_tvt_sets
 import tensorflow as tf
 import numpy as np
+import parameters
 
 
 # set split of chromosomes
@@ -70,4 +71,4 @@ model.fit(x=xtrain, y=ytrain, epochs = 100, class_weight=weights)
 model.evaluate(xval, yval, verbose=2)
 
 #save the model
-model.save("model/5_0_10kb_batch_normalized.h5")
+model.save(parameters.model)
