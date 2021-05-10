@@ -6,8 +6,7 @@ import os
 from pygenometracks import plotTracks
 
 def main (args = None):
-    print(args)
-    plotTracks.main(args)
+    plotTracks.main()
 
 if __name__ == "__main__":
     main()

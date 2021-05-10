@@ -1,5 +1,8 @@
 preparations/
-models/
+model/
 .idea/
 __pycache__/
 data/
+*.png
+
+notizen
