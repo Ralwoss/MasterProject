@@ -98,8 +98,8 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows = False
         for bound in chrbounds:
             if (bound < window_size / 2):
                 continue
-            start = int(bound - int(window_size / 2))
-            end = int(bound + round(window_size / 2))
+            start = int(bound - int(window_size / 2)) + offset
+            end = int(bound + round(window_size / 2)) + offset
             submat_pos.append(hic_matrix[start:end, start:end])
             if (write_windows):
                 windows.write(chrom + "\t" + str((start)*binsize) + "\t" + str((end-1)*binsize) + "\n")
@@ -145,6 +145,8 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows = False
         submats_pos[chrom] = submat_pos
         submats_neg[chrom] = submat_neg
         chrcount += 1
+        print("Number of positive windows in " + chrom + ": " + str(len(submat_pos)))
+        print("Number of negative windows in " + chrom + ": " + str(len(submat_neg)))
         print()
 
 

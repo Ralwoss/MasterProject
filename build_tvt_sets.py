@@ -10,13 +10,13 @@ TESTCHROMS = parameters.TESTCHROMS
 #split data in training, validation and testset, still hardcoded split of chromosomes
 def build_tvt(verbose=False):
     # load data
-    data, labels = load.load_data(parameters.interaction_matrices, parameters.labels)
+    interaction_matrices_pos, interaction_matrices_neg = load.load_data(parameters.interaction_matrices_pos, parameters.interaction_matrices_neg)
     # construct training set
     xtrain = []
     ytrain = []
     for chr in TRAINCHORMS:
-        xtrain = xtrain + data[chr]
-        ytrain = ytrain + labels[chr]
+        xtrain = xtrain + interaction_matrices_pos[chr]+interaction_matrices_neg[chr]
+        ytrain = ytrain + len(interaction_matrices_pos[chr]) * [1] + len(interaction_matrices_neg[chr]) * [0]
     xtrain = np.array(xtrain)
     ytrain = np.array(ytrain)
     if verbose:
@@ -27,8 +27,8 @@ def build_tvt(verbose=False):
     xval = []
     yval = []
     for chr in VALCHROMS:
-        xval = xval + data[chr]
-        yval = yval + labels[chr]
+        xval = xval + interaction_matrices_pos[chr] + interaction_matrices_neg[chr]
+        yval = yval + len(interaction_matrices_pos[chr]) * [1] + len(interaction_matrices_neg[chr]) * [0]
     xval = np.array(xval)
     yval = np.array(yval)
 
@@ -40,8 +40,8 @@ def build_tvt(verbose=False):
     xtest = []
     ytest = []
     for chr in TESTCHROMS:
-        xtest = xtest + data[chr]
-        ytest = ytest + labels[chr]
+        xtest = xtest + interaction_matrices_pos[chr] + interaction_matrices_neg[chr]
+        ytest = ytest + len(interaction_matrices_pos[chr]) * [1] + len(interaction_matrices_neg[chr]) * [0]
     xtest = np.array(xtest)
     ytest = np.array(ytest)
 
