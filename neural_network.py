@@ -21,8 +21,8 @@ def undersample(more_matrices, less_matrices):
     undersampled_matrices = more_matrices[np.random.choice(ids, len(less_matrices))]
     return undersampled_matrices
 
-def build_network():
-    balanceData = 3 #method to balance data: 0 - none; 1 - class weights; 2 - oversampling; 3 - undersampling
+def build_network(balanceData):
+    balanceData =  balanceData#method to balance data: 0 - none; 1 - class weights; 2 - oversampling; 3 - undersampling
     METRICS = [
 
           tf.keras.metrics.TruePositives(name='tp'),
@@ -121,7 +121,7 @@ def build_network():
                   loss='binary_crossentropy',
                   metrics=METRICS)
     #fit the model
-    model.fit(x=xtrain, y=ytrain, epochs = 100, class_weight=weights)
+    model.fit(x=xtrain, y=ytrain, epochs = 10, class_weight=weights, batch_size=32)
 
     #evaluate the validation set
     model.evaluate(xval, yval, verbose=2)
@@ -130,4 +130,4 @@ def build_network():
     model.save(parameters.model)
 
 if (__name__ == "__main__"):
-    build_network()
+    build_network(parameters.balanceData)
