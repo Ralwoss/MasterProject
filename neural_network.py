@@ -3,7 +3,8 @@ import load_data as load
 import build_tvt_sets
 import tensorflow as tf
 import numpy as np
-import parameters
+import parameters as pars
+import data_generator
 
 
 
@@ -107,7 +108,7 @@ def build_network(balanceData):
 
     #build a model
     model = tf.keras.Sequential([
-                                 tf.keras.layers.Flatten(input_shape=(parameters.window_size,parameters.window_size)),
+                                 tf.keras.layers.Flatten(input_shape=(pars.window_size,pars.window_size)),
                                  tf.keras.layers.BatchNormalization(),
                                  tf.keras.layers.Dense(256, activation='elu'),
                                  tf.keras.layers.Dropout(0.2),
@@ -121,13 +122,20 @@ def build_network(balanceData):
                   loss='binary_crossentropy',
                   metrics=METRICS)
     #fit the model
-    model.fit(x=xtrain, y=ytrain, epochs = 10, class_weight=weights, batch_size=32)
+    #model.fit(x=xtrain, y=ytrain, epochs = 10, class_weight=weights, batch_size=32)
+
+    dg = data_generator.dataGenerator(pars.interaction_matrices_pos_npz, pars.interaction_matrices_neg_npz)
+
+    a = dg.__getitem__(0)
+
+    model.fit(dg, epochs=100)
+
 
     #evaluate the validation set
-    model.evaluate(xval, yval, verbose=2)
+    #model.evaluate(xval, yval, verbose=2)
 
     #save the model
-    model.save(parameters.model)
+    model.save(pars.model)
 
 if (__name__ == "__main__"):
-    build_network(parameters.balanceData)
+    build_network(pars.balanceData)
