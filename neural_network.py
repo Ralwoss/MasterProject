@@ -126,7 +126,7 @@ def build_network(balanceData):
 
     dg = data_generator.dataGenerator(pars.interaction_matrices_pos_npz, pars.interaction_matrices_neg_npz)
 
-    a = dg.__getitem__(0)
+    #a = dg.__getitem__(0)
 
     model.fit(dg, epochs=100)
 
