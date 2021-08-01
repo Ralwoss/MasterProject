@@ -1,7 +1,7 @@
 import tensorflow as tf
 import build_tvt_sets
 
-
+#TODO: move this function in neural_network.py?
 def load_model(filepath):
     model = tf.keras.models.load_model(filepath)
     return model

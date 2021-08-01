@@ -6,6 +6,8 @@ import parameters
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
+
+#TODO: move this function in neural_network.py?
 def build_confusion_matrix(model):
     valset = build_tvt_sets.build_tvt()[1]
 

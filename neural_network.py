@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
+import sys
+
 import load_data as load
 import build_tvt_sets
 import tensorflow as tf
 import numpy as np
 import parameters as pars
 import data_generator
-
-
+import load_model
 
 verbose = True
-
 
 
 def oversample(more_matrices, less_matrices):
@@ -117,6 +117,13 @@ def build_network(balanceData):
                                  tf.keras.layers.Dense(1, activation='sigmoid', bias_initializer=initbias)
     ])
 
+    """model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape=(pars.window_size, pars.window_size)),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(1, activation='sigmoid', bias_initializer=initbias)
+    ])"""
+
     #compile the model
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
@@ -130,12 +137,17 @@ def build_network(balanceData):
 
     model.fit(dg, epochs=100)
 
-
-    #evaluate the validation set
-    #model.evaluate(xval, yval, verbose=2)
-
     #save the model
     model.save(pars.model)
 
+def evaluate_network(model):
+    # evaluate the validation set
+    tvt = build_tvt_sets.build_tvt(verbose=True)
+    xval, yval = tvt[1]
+    model.evaluate(xval, yval, verbose=2)
+
+
 if (__name__ == "__main__"):
-    build_network(pars.balanceData)
+    #build_network(pars.balanceData)
+
+    evaluate_network(load_model.load_model(pars.model))

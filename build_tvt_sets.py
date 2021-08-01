@@ -6,7 +6,7 @@ import parameters
 TRAINCHORMS = parameters.TRAINCHORMS
 VALCHROMS = parameters.VALCHROMS
 TESTCHROMS = parameters.TESTCHROMS
-
+#TODO: split function for each kind of set
 #split data in training, validation and testset, still hardcoded split of chromosomes
 def build_tvt(verbose=False):
     # load data
