@@ -5,8 +5,11 @@ import load_data as load
 import build_tvt_sets
 import tensorflow as tf
 import numpy as np
+
+import parameters
 import parameters as pars
 import data_generator
+import cooler as cool
 import load_model
 
 verbose = True
@@ -150,4 +153,8 @@ def evaluate_network(model):
 if (__name__ == "__main__"):
     #build_network(pars.balanceData)
 
-    evaluate_network(load_model.load_model(pars.model))
+    #evaluate_network(load_model.load_model(pars.model))
+
+    resultx, resulty = build_tvt_sets.build_training_set(cool.Cooler(parameters.hic_matrix))
+    print(resulty)
+

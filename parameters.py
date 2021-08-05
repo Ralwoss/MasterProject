@@ -12,6 +12,7 @@ interaction_matrices_pos = "preparations/"+ save_preparation_id+"/InteractionMat
 interaction_matrices_neg = "preparations/"+ save_preparation_id+"/InteractionMatricesNeg"
 interaction_matrices_pos_npz = 'preparations/' + save_preparation_id + '/InteractionMatricesPosNp.npz'
 interaction_matrices_neg_npz = 'preparations/' + save_preparation_id + '/InteractionMatricesNegNp.npz'
+windows_bed = 'preparations/' + save_preparation_id + '/windows.bed'
 balancing = {0:"", 1:"class_weights", 2:"oversampling", 3:"undersampling"}
 model = "model/" + save_preparation_id + "_"+ balancing[balanceData] +"_batch_normalized.h5"
 TRAINCHORMS = ['chr5', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX']

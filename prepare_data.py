@@ -18,8 +18,9 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
     :param boundaries: dictionary with lists of TAD-boundaries for every chromosome
     :param windows_bed: file in which the windows will be written
     :param found_boundaries_bed: windows in which found boundaries will be written
-    :return: submats_pos, submats_neg with submatrices with/without boundaries in the center
+
     """
+    ##  :return: submats_pos, submats_neg with submatrices with / without boundaries in the center
 
     binsize = hic_cooler.binsize
     offset = 0  # how far start point is moved because of chromosome concatenating in hicmatrix
@@ -32,13 +33,10 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
 
     windows = windows_bed
     found_boundaries = found_boundaries_bed
-    if windows_bed:
-        windows.write("chrom\tchromStart\tchromEnd\n")
-    if found_boundaries_bed:
-        found_boundaries.write("chrom\tchromStart\tchromEnd\n")
 
-    submats_pos = {}
-    submats_neg = {}
+
+    #submats_pos = {}
+    #submats_neg = {}
 
 
     for chr in hic_cooler.chromnames:
@@ -56,25 +54,30 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
         #TODO: saving submatrices like that?
 
         # for saving submats of negative and positive windows
-        submat_neg = []
-        submat_pos = []
+        #submat_neg = []
+        #submat_pos = []
 
+        count = 0
         for bound in chrbounds:
             if (bound < pars.window_size / 2):
                 continue
             wstart = int(bound - int(pars.window_size / 2)) + offset
             wend = int(bound + round(pars.window_size / 2)) + offset
-            submat_pos.append(hic_matrix[wstart:wend, wstart:wend])
+            #submat_pos.append(hic_matrix[wstart:wend, wstart:wend])
             if windows_bed:
-                windows.write(f"{chr}\t{(wstart-offset)*binsize}\t{(wend-offset-1)*binsize}\n")
+                windows.write(f"{chr}\t{(wstart-offset)*binsize}\t{(wend-offset-1)*binsize}\t{chr}_POS{count}\t1000\n")
             if found_boundaries_bed:
                 found_boundaries.write(f"{chr}\t{int((bound-1)*binsize)}\t{int((bound+1)*binsize)}\n")
+
+            count += 1
 
         # define first window start and end
 
         wstart = offset
         wend = wstart + pars.window_size
         boundarystart = 0
+
+        count = 0
 
         # go trough hicmatrix and build submatrix with corresponding boundaries flag
         while wend <= hic_cooler.extent(chr)[1]:
@@ -101,17 +104,19 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
                     break  # end for-loop if already found a boundary inside center
 
             if label != 1:
-                submat_neg.append(hic_matrix[wstart:wend, wstart:wend])
+                #submat_neg.append(hic_matrix[wstart:wend, wstart:wend])
                 if windows_bed:
-                    windows.write(f"{chr}\t{(wstart - offset) * binsize}\t{(wend - offset - 1) * binsize}\n")
+                    windows.write(f"{chr}\t{(wstart - offset) * binsize}\t{(wend - offset - 1) * binsize}\t"
+                                  f"{chr}_NEG{count}\t0\n")
 
             wstart, wend = wstart + pars.window_size - pars.overlap_size, wend + pars.window_size - pars.overlap_size
-        submats_pos[chr] = submat_pos
-        submats_neg[chr] = submat_neg
-        print(f"Number of positive windows in {chr}: {str(len(submat_pos))}")
-        print(f"Number of negative windows in {chr}: {str(len(submat_neg))}")
-        print()
-    return submats_pos, submats_neg
+            count += 1
+        #submats_pos[chr] = submat_pos
+        #submats_neg[chr] = submat_neg
+        #print(f"Number of positive windows in {chr}: {str(len(submat_pos))}")
+        #print(f"Number of negative windows in {chr}: {str(len(submat_neg))}")
+        #print()
+    #return submats_pos, submats_neg
 
     """for number in numberbins:
         chrom = hic_cooler.chromnames[chrcount]
@@ -202,8 +207,9 @@ def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_bou
     :param boundaries: dictionary with lists of TAD-boundaries for every chromosome
     :param windows_bed: file in which the windows will be written
     :param found_boundaries_bed: windows in which found boundaries will be written
-    :return:
     """
+    ##:return:
+
     offset = 0  # how far start point is moved because of chromosome concatenating in hicmatrix
     numberbins = []  # list of number of bins for each chromosome
     binsize = hic_cooler.binsize
@@ -214,13 +220,9 @@ def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_bou
 
     windows = windows_bed
     found_boundaries = found_boundaries_bed
-    if windows_bed:
-        windows.write("chrom\tchromStart\tchromEnd\n")
-    if found_boundaries_bed:
-        found_boundaries.write("chrom\tchromStart\tchromEnd\n")
 
-    submats_pos = {}
-    submats_neg = {}
+    #submats_pos = {}
+    #submats_neg = {}
 
     for chr in hic_cooler.chromnames:
         if chr in pars.TRAINCHORMS:
@@ -237,12 +239,15 @@ def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_bou
         # TODO: saving submatrices like that?
 
         # for saving submats of negative and positive windows
-        submat_neg = []
-        submat_pos = []
+        #submat_neg = []
+        #submat_pos = []
 
         wstart = offset
         wend = wstart + pars.window_size
         boundarystart = 0
+
+        poscount = 0
+        negcount = 0
 
         # go trough hicmatrix and build submatrix with corresponding boundaries flag
         while wend <= hic_cooler.extent(chr)[1]:
@@ -263,23 +268,28 @@ def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_bou
                         (pars.window_size - centersize) / 2):
                     label = 1
                 if label == 1:
-                    submat_pos.append(hic_matrix[wstart:wend, wstart:wend])
+                    #submat_pos.append(hic_matrix[wstart:wend, wstart:wend])
                     if windows_bed:
-                        windows.write(f"{chr}\t{(wstart-offset) * pars.binsize}\t{(wend - offset - 1) * pars.binsize}\n")
+                        windows.write(f"{chr}\t{(wstart-offset) * pars.binsize}\t{(wend - offset - 1) * pars.binsize}\t"
+                                      f"{chr}_POS{poscount}\t1000\n")
                     if found_boundaries_bed:
-                        found_boundaries.write(f"{chr}\t{int((bound - 1) * pars.binsize)}\t{int((bound + 1) * pars.binsize)}\n")
+                        found_boundaries.write(f"{chr}\t{int((bound - 1) * pars.binsize)}\t"
+                                               f"{int((bound + 1) * pars.binsize)}\n")
+                    poscount += 1
             if (label != 1):
-                submat_neg.append(hic_matrix[wstart:wend, wstart:wend])
+                #submat_neg.append(hic_matrix[wstart:wend, wstart:wend])
                 if windows_bed:
-                    windows.write(f"{chr}\t{(wstart - offset) * pars.binsize}\t{(wend - offset - 1) * pars.binsize}\n")
+                    windows.write(f"{chr}\t{(wstart - offset) * pars.binsize}\t{(wend - offset - 1) * pars.binsize}\t"
+                                  f"{chr}_NEG{negcount}\t0\n")
+                negcount += 1
             wstart, wend = wstart + pars.window_size - pars.overlap_size, wend + pars.window_size - pars.overlap_size
-        submats_pos[chr] = submat_pos
-        submats_neg[chr] = submat_neg
+        #submats_pos[chr] = submat_pos
+        #submats_neg[chr] = submat_neg
 
-        print(f"Number of positive windows in {chr}: {str(len(submat_pos))}")
-        print(f"Number of negative windows in {chr}: {str(len(submat_neg))}")
-        print()
-    return submats_pos, submats_neg
+        #print(f"Number of positive windows in {chr}: {str(len(submat_pos))}")
+        #print(f"Number of negative windows in {chr}: {str(len(submat_neg))}")
+        #print()
+    #return submats_pos, submats_neg
 
 
 
@@ -443,18 +453,24 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False):
                 boundaries[cont[0]] = [int(cont[1]) / binsize]  # Add first boundary
             boundaries[cont[0]].append((int(cont[2]) / binsize))  # append every end boundary of TAD
 
+
+    windows.write("chrom\tchromStart\tchromEnd\tname\tscore\n")
+    found_boundaries.write("chrom\tchromStart\tchromEnd\tname\tscore\n")
+
     # gets all submatrices for validation and training datasets
-    submats_pos, submats_neg = make_val_and_test_data(c, boundaries, windows, found_boundaries)
+    make_val_and_test_data(c, boundaries, windows, found_boundaries)
+    make_train_data(c, boundaries, windows, found_boundaries)
+    #submats_pos, submats_neg = make_val_and_test_data(c, boundaries, windows, found_boundaries)
     # gets all submatrices for training dataset
-    a, b = make_train_data(c, boundaries, windows, found_boundaries)
-    submats_pos.update(a), submats_neg.update(b)
+    #a, b = make_train_data(c, boundaries, windows, found_boundaries)
+    #submats_pos.update(a), submats_neg.update(b)
 
     ## save interaction matrices and corresponding labels
     ## pick.dump(submats_pos, open('preparations/'+ pars.save_preparation_id +'/InteractionMatricesPos' , 'wb'))
     ## pick.dump(submats_neg, open('preparations/' + pars.save_preparation_id + '/InteractionMatricesNeg', 'wb'))
 
     # saves all submats in a numpy archive
-    save_as_npz(submats_pos, submats_neg, c)
+    #save_as_npz(submats_pos, submats_neg, c)
 
     ## pick.dump(labels, open('preparations/' + parameters.save_preparation_id + '/labels', 'wb'))
 
