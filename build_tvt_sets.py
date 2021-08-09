@@ -25,10 +25,10 @@ def build_training_set (cooler,windows_file = parameters.windows_bed, chroms = p
                 continue
             offset = cooler.offset(cont[0])
             binsize = cooler.binsize
-            x.append(matrix[offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize),
-                     offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)])
+            x.append(matrix[offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)+1,
+                     offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)+1])
             y.append(int(cont[4])//1000)
-            x, y = np.array(x), np.array(y)
+    x, y = np.array(x), np.array(y)
 
     return x,y
 
@@ -47,11 +47,10 @@ def build_validation_set (cooler,windows_file = parameters.windows_bed, chroms =
                 continue
             offset = cooler.offset(cont[0])
             binsize = cooler.binsize
-            x.append(matrix[offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize),
-                     offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)])
+            x.append(matrix[offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)+1,
+                     offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)+1])
             y.append(int(cont[4])//1000)
-            x, y = np.array(x), np.array(y)
-
+    x, y = np.array(x), np.array(y)
     return x,y
 
 def build_test_set (cooler,windows_file = parameters.windows_bed, chroms = parameters.TESTCHROMS):
@@ -69,10 +68,10 @@ def build_test_set (cooler,windows_file = parameters.windows_bed, chroms = param
                 continue
             offset = cooler.offset(cont[0])
             binsize = cooler.binsize
-            x.append(matrix[offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize),
-                     offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)])
+            x.append(matrix[offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)+1,
+                     offset+(int(cont[1])//binsize):offset+(int(cont[2])//binsize)+1])
             y.append(int(cont[4])//1000)
-            x, y = np.array(x), np.array(y)
+    x, y = np.array(x), np.array(y)
 
     return x,y
 
@@ -85,8 +84,6 @@ def build_test_set (cooler,windows_file = parameters.windows_bed, chroms = param
 # split data in training, validation and testset, still hardcoded split of chromosomes
 def build_tvt(cooler,windows_file = parameters.windows_bed, trainchroms = parameters.TRAINCHORMS,
               valchroms = parameters.VALCHROMS, testchroms = parameters.TESTCHROMS, verbose=False):
-    # load data
-    interaction_matrices_pos, interaction_matrices_neg = load.load_data(parameters.interaction_matrices_pos, parameters.interaction_matrices_neg)
     # construct training set
     xtrain, ytrain = build_training_set(cooler,windows_file, trainchroms)
     if verbose:

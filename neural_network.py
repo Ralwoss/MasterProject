@@ -5,16 +5,17 @@ import load_data as load
 import build_tvt_sets
 import tensorflow as tf
 import numpy as np
+import cooler as cool
 
 import parameters
 import parameters as pars
 import data_generator
-import cooler as cool
+
 import load_model
 
 verbose = True
 
-
+"""
 def oversample(more_matrices, less_matrices):
     ids = np.arange(len(less_matrices))
     oversampled_matrices = less_matrices[np.random.choice(ids, len(more_matrices))]
@@ -24,6 +25,7 @@ def undersample(more_matrices, less_matrices):
     ids = np.arange(len(less_matrices))
     undersampled_matrices = more_matrices[np.random.choice(ids, len(less_matrices))]
     return undersampled_matrices
+"""
 
 def build_network(balanceData):
     balanceData =  balanceData#method to balance data: 0 - none; 1 - class weights; 2 - oversampling; 3 - undersampling
@@ -46,11 +48,8 @@ def build_network(balanceData):
         tf.keras.metrics.AUC(name='auc')
     ]
     #build training, validation and test datasets
-    tvt = build_tvt_sets.build_tvt(verbose=True)
-
-    xtrain, ytrain = tvt[0]
-    xval, yval = tvt[1]
-    xtest, ytest = tvt[2]
+    """
+    xtrain, ytrain = build_tvt_sets.build_training_set()
 
 
 
@@ -60,10 +59,10 @@ def build_network(balanceData):
     except:
         print("Not enough classes with/without boundaries to learn")
         return
-
+    
     weights = {0: 1, 1: 1}
     initbias = 0
-
+    
     if(balanceData == 1):
         weightzero = len(ytrain) / (2 * zerocount)
         weightone = len(ytrain) / (2*onecount)
@@ -108,8 +107,8 @@ def build_network(balanceData):
     ytrain = ytrain[ids]
 
     initbias=tf.keras.initializers.Constant(np.log([onecount/zerocount]))
-
-    #build a model
+    """
+    # build a model
     model = tf.keras.Sequential([
                                  tf.keras.layers.Flatten(input_shape=(pars.window_size,pars.window_size)),
                                  tf.keras.layers.BatchNormalization(),
@@ -117,7 +116,7 @@ def build_network(balanceData):
                                  tf.keras.layers.Dropout(0.2),
                                  tf.keras.layers.Dense(256, activation='elu'),
                                  tf.keras.layers.Dropout(0.2),
-                                 tf.keras.layers.Dense(1, activation='sigmoid', bias_initializer=initbias)
+                                 tf.keras.layers.Dense(1, activation='sigmoid')
     ])
 
     """model = tf.keras.models.Sequential([
@@ -138,23 +137,23 @@ def build_network(balanceData):
 
     #a = dg.__getitem__(0)
 
-    model.fit(dg, epochs=100)
+    model.fit(dg, epochs=5)
 
     #save the model
     model.save(pars.model)
 
 def evaluate_network(model):
     # evaluate the validation set
-    tvt = build_tvt_sets.build_tvt(verbose=True)
-    xval, yval = tvt[1]
+
+    xval, yval = build_tvt_sets.build_validation_set(cool.Cooler(parameters.hic_matrix), parameters.windows_bed)
     model.evaluate(xval, yval, verbose=2)
 
 
 if (__name__ == "__main__"):
-    #build_network(pars.balanceData)
+    build_network(pars.balanceData)
 
-    #evaluate_network(load_model.load_model(pars.model))
+    evaluate_network(load_model.load_model(pars.model))
 
-    resultx, resulty = build_tvt_sets.build_training_set(cool.Cooler(parameters.hic_matrix))
-    print(resulty)
+    #resultx, resulty = build_tvt_sets.build_training_set(cool.Cooler(parameters.hic_matrix))
+    #print(resulty)
 
