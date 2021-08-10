@@ -133,11 +133,11 @@ def build_network(balanceData):
     #fit the model
     #model.fit(x=xtrain, y=ytrain, epochs = 10, class_weight=weights, batch_size=32)
 
-    dg = data_generator.dataGenerator(pars.interaction_matrices_pos_npz, pars.interaction_matrices_neg_npz)
+    dg = data_generator.dataGenerator(pars.interaction_matrices_pos_npz, pars.interaction_matrices_neg_npz, balance_method="oversampling")
 
     #a = dg.__getitem__(0)
 
-    model.fit(dg, epochs=5)
+    model.fit(dg, epochs=100)
 
     #save the model
     model.save(pars.model)
