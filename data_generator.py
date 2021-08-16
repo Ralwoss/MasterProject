@@ -2,8 +2,9 @@ import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 import numpy as np
 import parameters as pars
+import random
 
-
+"""
 class dataGenerator(Sequence):
     def __init__(self, pos_matrices_npz, neg_matrices_npz, batch_size=32, dim=(pars.window_size, pars.window_size),
                  n_classes=2, shuffle=True, balance_method=None):
@@ -109,11 +110,12 @@ class dataGenerator(Sequence):
                 X[i, ] = self.neg_train_matrices[indexes[i] - len(self.pos_train_matrices)]
                 y[i] = 0
         return X, y
-        
-
 """
+
+
 # Try to load submatrices when needed in dataGenerator. Takes too long
 class dataGenerator(Sequence):
+    #TODO: write/update functionality for no balance method
     def __init__(self, cooler, windows, chromosomes, batch_size=32, dim=(pars.window_size, pars.window_size),
                  n_classes=2, shuffle=True, balance_method=None):
 
@@ -127,31 +129,32 @@ class dataGenerator(Sequence):
         self.shuffle = shuffle
         self.balance_method = balance_method
 
-        self.X_pos, self.X_neg = self.prepare_Xs(cooler, windows, chromosomes)
+        self.X_pos_prep, self.X_neg_prep = self.prepare_Xs(cooler,windows,chromosomes)
 
         self.on_epoch_end()
+        self.X_pos, self.X_neg = self.make_Xs(self.cooler, self.windows, self.chromosomes)
 
     def on_epoch_end(self):
         if str(self.balance_method).lower() == "oversampling":
             # for smaller sample set multiply size to get more indexes for sampling
-            maxsize = max(len(self.X_pos), len(self.X_neg))
-            if len(self.X_pos) < maxsize:  # if less positive samples
-                proportion = int(np.ceil(maxsize / len(self.X_pos)))
-                self.indexes_pos = np.arange(len(self.X_pos) * proportion)
-                self.indexes_neg = np.arange(len(self.X_neg))
-            elif len(self.X_neg) < maxsize:  # if less negative samples
-                proportion = int(np.ceil(maxsize / len(self.X_neg)))
-                self.indexes_pos = np.arange(len(self.X_pos))
-                self.indexes_neg = np.arange(len(self.X_neg) * proportion)
+            maxsize = max(len(self.X_pos_prep), len(self.X_neg_prep))
+            if len(self.X_pos_prep) < maxsize:  # if less positive samples
+                proportion = int(np.ceil(maxsize / len(self.X_pos_prep)))
+                self.indexes_pos = np.arange(len(self.X_pos_prep) * proportion)
+                self.indexes_neg = np.arange(len(self.X_neg_prep))
+            elif len(self.X_neg_prep) < maxsize:  # if less negative samples
+                proportion = int(np.ceil(maxsize / len(self.X_neg_prep)))
+                self.indexes_pos = np.arange(len(self.X_pos_prep))
+                self.indexes_neg = np.arange(len(self.X_neg_prep) * proportion)
             else:  # if equal positive and negative samples
-                self.indexes_pos = np.arange(len(self.X_pos))
-                self.indexes_neg = np.arange(len(self.X_neg))
+                self.indexes_pos = np.arange(len(self.X_pos_prep))
+                self.indexes_neg = np.arange(len(self.X_neg_prep))
 
         elif str(self.balance_method).lower() == "undersampling":
-            self.indexes_pos = np.arange(len(self.X_pos))
-            self.indexes_neg = np.arange(len(self.X_neg))
+            self.indexes_pos = np.arange(len(self.X_pos_prep))
+            self.indexes_neg = np.arange(len(self.X_neg_prep))
         else:
-            self.indexes = np.arange(len(self.X_pos) + len(self.X_neg))
+            self.indexes = np.arange(len(self.X_pos_prep) + len(self.X_neg_prep))
 
         # print(self.indexes)
         if self.shuffle:
@@ -161,6 +164,8 @@ class dataGenerator(Sequence):
                 np.random.shuffle(self.indexes_neg)
             else:
                 np.random.shuffle(self.indexes)
+
+
 
 
 
@@ -179,13 +184,14 @@ class dataGenerator(Sequence):
         else:  # no data balancing
             indexes = self.indexes[(index * self.batch_size): (index + 1) * self.batch_size]
             X, y = self.__data_generation(indexes)
+        #print(X.shape)
         return X, y
 
     def __len__(self):
         if str(self.balance_method).lower() == "oversampling":
-            return int(np.floor(2 * max(len(self.X_pos), len(self.X_neg)) / self.batch_size))
+            return int(np.floor(2 * max(len(self.X_pos_prep), len(self.X_neg_prep)) / self.batch_size))
         elif str(self.balance_method).lower() == "undersampling":
-            return int(np.floor(2 * min(len(self.X_pos), len(self.X_neg)) / self.batch_size))
+            return int(np.floor(2 * min(len(self.X_pos_prep), len(self.X_neg_prep)) / self.batch_size))
         else:
             return int(np.floor((len(self.X_pos) + len(self.X_neg)) / self.batch_size))
 
@@ -196,21 +202,21 @@ class dataGenerator(Sequence):
 
         if str(self.balance_method).lower() == "oversampling":
             for i in np.arange(len(indexes_pos)):
-                bounds = self.X_pos[indexes_pos[i] % len(self.X_pos)]
-                X[2 * i,] = self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]]
+                X[2 * i,] = self.X_pos[indexes_pos[i] % len(self.X_pos)]
                 y[2 * i] = 1
-                bounds = self.X_neg[indexes_neg[i] % len(self.X_neg)]
-                X[2 * i + 1,] = self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]]
+                X[2 * i + 1] = self.X_neg[indexes_neg[i] % len(self.X_neg)]
                 y[2 * i + 1] = 0
         elif str(self.balance_method).lower() == "undersampling":
             for i in np.arange(len(indexes_pos)):
-                X[2 * i,] = self.pos_train_matrices[indexes_pos[i]]
+                X[2 * i,] = self.X_pos[indexes_pos[i]]
                 y[2 * i] = 1
-                X[2 * i + 1,] = self.neg_train_matrices[indexes_neg[i]]
+                X[2 * i + 1,] = self.X_neg[indexes_neg[i]]
                 y[2 * i + 1] = 0
         return X, y
 
     def __data_generation(self, indexes):
+        #TODO write function new
+        raise NotImplementedError
         X = np.empty((self.batch_size, *self.dim))
         y = np.empty(self.batch_size, dtype=int)
 
@@ -224,7 +230,7 @@ class dataGenerator(Sequence):
         return X, y
 
     def prepare_Xs(self, cooler, windows, chromosomes):
-        matrix = cooler.matrix(balance=False)
+
         X_pos = []
         X_neg = []
         with open(windows, 'r') as f:
@@ -242,5 +248,41 @@ class dataGenerator(Sequence):
                     X_pos.append((offset + (int(cont[1]) // binsize), offset + (int(cont[2]) // binsize) + 1))
                 else:
                     X_neg.append((offset + (int(cont[1]) // binsize), offset + (int(cont[2]) // binsize) + 1))
+        print("finished parsing all Lines")
         return X_pos, X_neg
-"""
+
+    def make_Xs(self, cooler, windows, chromosomes):
+        #TODO: move random addition to prepare Xs?
+        X_pos = []
+        X_neg = []
+        matrix = cooler.matrix(balance=False)
+        X_pos_bounds, X_neg_bounds = self.X_pos_prep, self.X_neg_prep
+        max_pos = len(self.indexes_pos)
+        max_neg = len(self.indexes_neg)
+        count = 0
+
+        while count < max_pos:
+            random_addition = random.randint(-pars.detection_range,pars.detection_range)
+            bound = X_pos_bounds[count % len(X_pos_bounds)]
+            if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
+                bound = (bound[0]+random_addition, bound[1]+random_addition)
+            X_pos.append(matrix[bound[0]:bound[1], bound[0]:bound[1]])
+            count += 1
+            if count % 1000 == 0:
+                print(f"{count} positive submatrices build")
+        print("finished building all positive submatrices")
+        count = 0
+        while count < max_neg:
+            random_addition = random.randint(-pars.detection_range, pars.detection_range)
+            bound = X_neg_bounds[count % len(X_neg_bounds)]
+            if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
+                bound = (bound[0]+random_addition, bound[1]+random_addition)
+            X_neg.append(matrix[bound[0]:bound[1], bound[0]:bound[1]])
+            count += 1
+            if count % 1000 == 0:
+                print(f"{count} negative submatrices build")
+        print("finished building all positive submatrices")
+        return np.array(X_pos), np.array(X_neg)
+
+
+
