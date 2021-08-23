@@ -15,20 +15,8 @@ import load_model
 
 verbose = True
 
-"""
-def oversample(more_matrices, less_matrices):
-    ids = np.arange(len(less_matrices))
-    oversampled_matrices = less_matrices[np.random.choice(ids, len(more_matrices))]
-    return oversampled_matrices
 
-def undersample(more_matrices, less_matrices):
-    ids = np.arange(len(less_matrices))
-    undersampled_matrices = more_matrices[np.random.choice(ids, len(less_matrices))]
-    return undersampled_matrices
-"""
-
-def build_network(balanceData):
-    balanceData = balanceData  #method to balance data: 0 - none; 1 - class weights; 2 - oversampling; 3 - undersampling
+def build_network():
     METRICS = [
 
           tf.keras.metrics.TruePositives(name='tp'),
@@ -48,94 +36,28 @@ def build_network(balanceData):
           tf.keras.metrics.AUC(name='auc')
     ]
     #build training, validation and test datasets
-    """
-    xtrain, ytrain = build_tvt_sets.build_training_set()
 
 
-
-    #compute class weights
-    try:
-        zerocount, onecount = np.bincount(ytrain)
-    except:
-        print("Not enough classes with/without boundaries to learn")
-        return
-    
-    weights = {0: 1, 1: 1}
-    initbias = 0
-    
-    if(balanceData == 1):
-        weightzero = len(ytrain) / (2 * zerocount)
-        weightone = len(ytrain) / (2*onecount)
-
-        weights = {0:weightzero, 1:weightone}
-        if verbose: print("Weights: " + str(weights))
-    elif (balanceData == 2):
-        print()
-
-        if(zerocount > onecount):
-
-            oversampled_positive_submatrices = oversample(xtrain[ytrain==0], xtrain[ytrain==1])
-
-            xtrain = np.append(xtrain[ytrain==0],oversampled_positive_submatrices, axis = 0)
-            ytrain = np.array(len(oversampled_positive_submatrices) * [0] + len(oversampled_positive_submatrices) * [1])
-
-
-
-        elif(onecount > zerocount):
-            oversampled_negative_submatrices = oversample((xtrain[ytrain==1], xtrain[ytrain==0]))
-            xtrain = np.append(xtrain[ytrain == 1], oversampled_negative_submatrices, axis=0)
-            ytrain = np.array(len(oversampled_negative_submatrices) * [1] + len(oversampled_negative_submatrices) * [0])
-
-    elif (balanceData == 3):
-        print()
-
-        if (zerocount > onecount):
-            undersampled_negative_submatrices = undersample(xtrain[ytrain == 0], xtrain[ytrain == 1])
-
-            xtrain = np.append(xtrain[ytrain == 1], undersampled_negative_submatrices, axis=0)
-            ytrain = np.array(len(undersampled_negative_submatrices) * [1] + len(undersampled_negative_submatrices) * [0])
-            print(len(ytrain))
-
-        elif (onecount > zerocount):
-            undersampled_positive_submatrices = undersample((xtrain[ytrain == 1], xtrain[ytrain == 0]))
-            xtrain = np.append(xtrain[ytrain == 0], undersampled_positive_submatrices, axis=0)
-            ytrain = np.array(len(undersampled_positive_submatrices) * [0] + len(undersampled_positive_submatrices) * [1])
-
-    ids = np.arange(len(xtrain))
-    np.random.shuffle(ids)
-    xtrain = xtrain[ids]
-    ytrain = ytrain[ids]
-
-    initbias=tf.keras.initializers.Constant(np.log([onecount/zerocount]))
-    """
     # build a model
     model = tf.keras.Sequential([
                                  tf.keras.layers.Flatten(input_shape=(pars.window_size,pars.window_size)),
                                  tf.keras.layers.BatchNormalization(),
-                                 tf.keras.layers.Dense(256, activation='elu'),
+                                 tf.keras.layers.Dense(256, activation='relu'),
                                  tf.keras.layers.Dropout(0.2),
-                                 tf.keras.layers.Dense(256, activation='elu'),
+                                 tf.keras.layers.Dense(256, activation='relu'),
                                  tf.keras.layers.Dropout(0.2),
                                  tf.keras.layers.Dense(1, activation='sigmoid')
     ])
 
-    """model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape=(pars.window_size, pars.window_size)),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dropout(0.2),
-        tf.keras.layers.Dense(1, activation='sigmoid', bias_initializer=initbias)
-    ])"""
 
     #compile the model
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
                   metrics=METRICS)
+
     #fit the model
-    #model.fit(x=xtrain, y=ytrain, epochs = 10, class_weight=weights, batch_size=32)
-
-    dg = data_generator.dataGenerator(cool.Cooler(pars.hic_matrix), pars.windows_bed, pars.TRAINCHORMS, balance_method="oversampling")
-
-    #a = dg.__getitem__(0)
+    dg = data_generator.dataGenerator(cool.Cooler(pars.hic_matrix), pars.windows_bed, pars.TRAINCHORMS,
+                                      balance_method="undersampling")
 
     model.fit(dg, epochs=100)
 
@@ -180,9 +102,9 @@ def evaluate_network(model, detailed = False, results_dir = pars.results_dir):
 
 
 if (__name__ == "__main__"):
-    build_network(pars.balanceData)
+    build_network()
 
-    #evaluate_network(load_model.load_model(pars.model), detailed=True)
+    evaluate_network(load_model.load_model(pars.model), detailed=True)
     evaluate_network(load_model.load_model(pars.model), detailed=False)
 
     #resultx, resulty = build_tvt_sets.build_training_set(cool.Cooler(parameters.hic_matrix))

@@ -1,8 +1,5 @@
-import tensorflow as tf
 import numpy as np
-import load_data as load
 import parameters
-import cooler as cool
 
 TRAINCHORMS = parameters.TRAINCHORMS
 VALCHROMS = parameters.VALCHROMS
