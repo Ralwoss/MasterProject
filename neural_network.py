@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys
 
-import load_data as load
 import build_tvt_sets
 import tensorflow as tf
 import numpy as np
@@ -57,7 +55,7 @@ def build_network():
 
     #fit the model
     dg = data_generator.dataGenerator(cool.Cooler(pars.hic_matrix), pars.windows_bed, pars.TRAINCHORMS,
-                                      balance_method="undersampling")
+                                      balance_method=None)
 
     model.fit(dg, epochs=100)
 

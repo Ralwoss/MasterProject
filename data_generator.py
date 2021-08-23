@@ -22,7 +22,7 @@ class dataGenerator(Sequence):
         self.X_pos_prep, self.X_neg_prep = self.prepare_Xs(cooler,windows,chromosomes)
 
         self.on_epoch_end()
-        self.X_pos, self.X_neg = self.make_Xs(self.cooler, self.windows, self.chromosomes)
+        self.X_pos, self.X_neg = self.make_Xs()
 
     def on_epoch_end(self):
         if str(self.balance_method).lower() == "oversampling":
@@ -43,7 +43,7 @@ class dataGenerator(Sequence):
         elif str(self.balance_method).lower() == "undersampling":
             self.indexes_pos = np.arange(len(self.X_pos_prep))
             self.indexes_neg = np.arange(len(self.X_neg_prep))
-        else:
+        else:  #balance method = None
             self.indexes = np.arange(len(self.X_pos_prep) + len(self.X_neg_prep))
 
         # print(self.indexes)
@@ -105,16 +105,15 @@ class dataGenerator(Sequence):
 
     def __data_generation(self, indexes):
         #TODO write function new
-        raise NotImplementedError
         X = np.empty((self.batch_size, *self.dim))
         y = np.empty(self.batch_size, dtype=int)
 
         for i in np.arange(len(indexes)):
-            if indexes[i] < len(self.pos_train_matrices):
-                X[i, ] = self.pos_train_matrices[indexes[i]]
+            if indexes[i] < len(self.X_pos):
+                X[i, ] = self.X_pos[indexes[i]]
                 y[i] = 1
             else:
-                X[i, ] = self.neg_train_matrices[indexes[i] - len(self.pos_train_matrices)]
+                X[i, ] = self.X_neg[indexes[i] - len(self.X_pos)]
                 y[i] = 0
         return X, y
 
@@ -140,36 +139,61 @@ class dataGenerator(Sequence):
         print("finished parsing all Lines")
         return X_pos, X_neg
 
-    def make_Xs(self, cooler, windows, chromosomes):
+    def make_Xs(self):
         #TODO: move random addition to prepare Xs?
+
         X_pos = []
         X_neg = []
         X_pos_bounds, X_neg_bounds = self.X_pos_prep, self.X_neg_prep
-        max_pos = len(self.indexes_pos)
-        max_neg = len(self.indexes_neg)
-        count = 0
+        if (self.balance_method != None):
+            max_pos = len(self.indexes_pos)
+            max_neg = len(self.indexes_neg)
+            count = 0
 
-        while count < max_pos:
-            random_addition = random.randint(-pars.detection_range,pars.detection_range)
-            bound = X_pos_bounds[count % len(X_pos_bounds)]
-            if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
-                bound = (bound[0]+random_addition, bound[1]+random_addition)
-            X_pos.append(self.matrix[bound[0]:bound[1], bound[0]:bound[1]])
-            count += 1
-            if count % 1000 == 0:
-                print(f"{count} positive submatrices build")
-        print("finished building all positive submatrices")
-        count = 0
-        while count < max_neg:
-            random_addition = random.randint(-pars.detection_range, pars.detection_range)
-            bound = X_neg_bounds[count % len(X_neg_bounds)]
-            if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
-                bound = (bound[0]+random_addition, bound[1]+random_addition)
-            X_neg.append(self.matrix[bound[0]:bound[1], bound[0]:bound[1]])
-            count += 1
-            if count % 1000 == 0:
-                print(f"{count} negative submatrices build")
-        print("finished building all positive submatrices")
+            while count < max_pos:
+                random_addition = random.randint(-pars.detection_range,pars.detection_range)
+                bound = X_pos_bounds[count % len(X_pos_bounds)]
+                if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
+                    bound = (bound[0]+random_addition, bound[1]+random_addition)
+                X_pos.append(self.matrix[bound[0]:bound[1], bound[0]:bound[1]])
+                count += 1
+                if count % 1000 == 0:
+                    print(f"{count} positive submatrices build")
+            print("finished building all positive submatrices")
+            count = 0
+            while count < max_neg:
+                random_addition = random.randint(-pars.detection_range, pars.detection_range)
+                bound = X_neg_bounds[count % len(X_neg_bounds)]
+                if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
+                    bound = (bound[0]+random_addition, bound[1]+random_addition)
+                X_neg.append(self.matrix[bound[0]:bound[1], bound[0]:bound[1]])
+                count += 1
+                if count % 1000 == 0:
+                    print(f"{count} negative submatrices build")
+            print("finished building all negative submatrices")
+        else:
+            count = 0
+            for bounds in X_pos_bounds:
+                random_addition = random.randint(-pars.detection_range, pars.detection_range)
+                if not (bounds[0] + random_addition < 0 or bounds[1] + random_addition >= len(self.matrix)):
+                    bounds = (bounds[0] + random_addition, bounds[1] + random_addition)
+                X_pos.append(self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]])
+                count += 1
+                if count % 1000 == 0:
+                    print(f"{count} positive submatrices build")
+
+            print("finished building all positive submatrices")
+            count = 0
+            for bounds in X_neg_bounds:
+                random_addition = random.randint(-pars.detection_range, pars.detection_range)
+                if not (bounds[0] + random_addition < 0 or bounds[1] + random_addition >= len(self.matrix)):
+                    bounds = (bounds[0] + random_addition, bounds[1] + random_addition)
+                X_neg.append(self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]])
+                count += 1
+                if count % 1000 == 0:
+                    print(f"{count} negative submatrices build")
+            print("finished building all negative submatrices")
+
         return np.array(X_pos), np.array(X_neg)
 
 
