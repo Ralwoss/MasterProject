@@ -6,7 +6,7 @@ import random
 # Try to load submatrices when needed in dataGenerator. Takes too long
 class dataGenerator(Sequence):
     #TODO: write/update functionality for no balance method
-    def __init__(self, cooler, windows, chromosomes, batch_size=32, dim=(pars.window_size, pars.window_size),
+    def __init__(self, cooler, windows, chromosomes, batch_size=32, dim=(pars.window_size*pars.window_size,),
                  n_classes=2, shuffle=True, balance_method=None):
 
         self.cooler = cooler
@@ -155,7 +155,7 @@ class dataGenerator(Sequence):
                 bound = X_pos_bounds[count % len(X_pos_bounds)]
                 if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
                     bound = (bound[0]+random_addition, bound[1]+random_addition)
-                X_pos.append(self.matrix[bound[0]:bound[1], bound[0]:bound[1]])
+                X_pos.append((self.matrix[bound[0]:bound[1], bound[0]:bound[1]]).flatten())
                 count += 1
                 if count % 1000 == 0:
                     print(f"{count} positive submatrices build")
@@ -166,7 +166,7 @@ class dataGenerator(Sequence):
                 bound = X_neg_bounds[count % len(X_neg_bounds)]
                 if not (bound[0] + random_addition < 0 or bound[1] + random_addition >= len(self.matrix)):
                     bound = (bound[0]+random_addition, bound[1]+random_addition)
-                X_neg.append(self.matrix[bound[0]:bound[1], bound[0]:bound[1]])
+                X_neg.append((self.matrix[bound[0]:bound[1], bound[0]:bound[1]]).flatten())
                 count += 1
                 if count % 1000 == 0:
                     print(f"{count} negative submatrices build")
@@ -177,7 +177,7 @@ class dataGenerator(Sequence):
                 random_addition = random.randint(-pars.detection_range, pars.detection_range)
                 if not (bounds[0] + random_addition < 0 or bounds[1] + random_addition >= len(self.matrix)):
                     bounds = (bounds[0] + random_addition, bounds[1] + random_addition)
-                X_pos.append(self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]])
+                X_pos.append((self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]]).flatten())
                 count += 1
                 if count % 1000 == 0:
                     print(f"{count} positive submatrices build")
@@ -188,7 +188,7 @@ class dataGenerator(Sequence):
                 random_addition = random.randint(-pars.detection_range, pars.detection_range)
                 if not (bounds[0] + random_addition < 0 or bounds[1] + random_addition >= len(self.matrix)):
                     bounds = (bounds[0] + random_addition, bounds[1] + random_addition)
-                X_neg.append(self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]])
+                X_neg.append((self.matrix[bounds[0]:bounds[1], bounds[0]:bounds[1]]).flatten())
                 count += 1
                 if count % 1000 == 0:
                     print(f"{count} negative submatrices build")

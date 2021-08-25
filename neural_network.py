@@ -38,7 +38,7 @@ def build_network():
 
     # build a model
     model = tf.keras.Sequential([
-                                 tf.keras.layers.Flatten(input_shape=(pars.window_size,pars.window_size)),
+                                 tf.keras.Input(shape=(pars.window_size ** 2, )),
                                  tf.keras.layers.BatchNormalization(),
                                  tf.keras.layers.Dense(256, activation='relu'),
                                  tf.keras.layers.Dropout(0.2),
@@ -55,7 +55,7 @@ def build_network():
 
     #fit the model
     dg = data_generator.dataGenerator(cool.Cooler(pars.hic_matrix), pars.windows_bed, pars.TRAINCHORMS,
-                                      balance_method=None)
+                                      balance_method="undersampling")
 
     model.fit(dg, epochs=100)
 
@@ -65,16 +65,33 @@ def build_network():
 def evaluate_network(model, detailed = False, results_dir = pars.results_dir):
     # evaluate the validation set
     hic_cooler = cool.Cooler(parameters.hic_matrix)
+    windows = parameters.windows_bed
+    chroms = parameters.VALCHROMS
+    binsize = hic_cooler.binsize
+    matrix = hic_cooler.matrix(balance=False)
     if not detailed:
-        xval, yval = build_tvt_sets.build_validation_set(hic_cooler, parameters.windows_bed)
+        xval = []
+        yval = []
+        with open(parameters.windows_bed, 'r') as f:
+            count = 0
+            for line in f:
+                count +=1
+                if count % 1000 == 0:
+                    print(f"{count} Lines parsed")
+                cont = line.strip().split()
+                if cont[0] not in chroms:
+                    continue
+                offset = hic_cooler.offset(cont[0])
+                pos = (offset + (int(cont[1]) // binsize), offset + (int(cont[2]) // binsize) + 1)
+                submatrix = matrix[pos[0]:pos[1], pos[0]:pos[1]].flatten()
+                xval.append(submatrix)
+                yval.append(int(cont[4])/1000)
+        xval = np.array(xval)
+        yval = np.array(yval)
         model.evaluate(xval, yval, verbose=2)
     else:
         fp_path = f"{results_dir}false_positives.txt"
         fn_path = f"{results_dir}false_negatives.txt"
-        windows = parameters.windows_bed
-        chroms = parameters.VALCHROMS
-        binsize = hic_cooler.binsize
-        matrix = hic_cooler.matrix(balance=False)
         with open(windows, 'r') as f, open(fp_path, 'w') as fp_file, open(fn_path,'w') as fn_file:
             fn_file.write(f"chrom\tchromStart\tchromEmd\taccurate_result\n")
             fp_file.write(f"chrom\tchromStart\tchromEmd\taccurate_result\n")
@@ -88,7 +105,8 @@ def evaluate_network(model, detailed = False, results_dir = pars.results_dir):
                     continue
                 offset = hic_cooler.offset(cont[0])
                 pos = (offset + (int(cont[1]) // binsize), offset + (int(cont[2]) // binsize) + 1)
-                submatrix = np.expand_dims(matrix[pos[0]:pos[1], pos[0]:pos[1]], axis=0)
+                submatrix = np.expand_dims(matrix[pos[0]:pos[1], pos[0]:pos[1]].flatten(), axis=0)
+                #print(submatrix.ndim)
                 result_acc = model(submatrix)
                 result = 0 if result_acc[0,0] < 0.5 else 1
                 if (result == 0 and int(cont[4]) == 1000):
