@@ -4,6 +4,7 @@ import build_tvt_sets
 import tensorflow as tf
 import numpy as np
 import cooler as cool
+import matplotlib.pyplot as plt
 
 import parameters
 import parameters as pars
@@ -11,10 +12,13 @@ import data_generator
 
 import load_model
 
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
+
 verbose = True
 
 
-def build_network():
+def build_network(balance_method = None):
     METRICS = [
 
           tf.keras.metrics.TruePositives(name='tp'),
@@ -45,8 +49,7 @@ def build_network():
                                  tf.keras.layers.Dense(256, activation='relu'),
                                  tf.keras.layers.Dropout(0.2),
                                  tf.keras.layers.Dense(1, activation='sigmoid')
-    ])
-
+    ], name=pars.string_model(balance_method)[6:-3])
 
     #compile the model
     model.compile(optimizer='adam',
@@ -55,14 +58,14 @@ def build_network():
 
     #fit the model
     dg = data_generator.dataGenerator(cool.Cooler(pars.hic_matrix), pars.windows_bed, pars.TRAINCHORMS,
-                                      balance_method="undersampling")
+                                      balance_method=balance_method)
 
     model.fit(dg, epochs=100)
 
     #save the model
-    model.save(pars.model)
+    model.save(pars.string_model(balance_method))
 
-def evaluate_network(model, detailed = False, results_dir = pars.results_dir):
+def evaluate_network(model, detailed = False, results_dir = pars.results_dir, build_confusion_matrix_b = False):
     # evaluate the validation set
     hic_cooler = cool.Cooler(parameters.hic_matrix)
     windows = parameters.windows_bed
@@ -89,6 +92,8 @@ def evaluate_network(model, detailed = False, results_dir = pars.results_dir):
         xval = np.array(xval)
         yval = np.array(yval)
         model.evaluate(xval, yval, verbose=2)
+        if build_confusion_matrix_b:
+            build_confusion_matrix(model, xval, yval)
     else:
         fp_path = f"{results_dir}false_positives.txt"
         fn_path = f"{results_dir}false_negatives.txt"
@@ -114,14 +119,25 @@ def evaluate_network(model, detailed = False, results_dir = pars.results_dir):
                 elif (result == 1 and int(cont[4]) == 0):
                     fp_file.write(f"{cont[0]}\t{cont[1]}\t{cont[2]}\t{result_acc[0,0]}\n")
 
+def build_confusion_matrix(model, xval, yval):
 
+    predict = model.predict(xval)
+
+    cm = confusion_matrix(yval, np.rint(predict), normalize=None)
+
+    disp = ConfusionMatrixDisplay(cm)
+
+    disp.plot(cmap=plt.cm.Blues)
+
+    plt.savefig(f"{model.name}.png")
 
 
 if (__name__ == "__main__"):
-    build_network()
+    balance_method = "oversampling"
+    build_network(balance_method)
 
-    evaluate_network(load_model.load_model(pars.model), detailed=True)
-    evaluate_network(load_model.load_model(pars.model), detailed=False)
+    #evaluate_network(load_model.load_model(pars.string_model(balance_method)), detailed=True)
+    evaluate_network(load_model.load_model(pars.string_model(balance_method)), detailed=False, build_confusion_matrix_b = True)
 
     #resultx, resulty = build_tvt_sets.build_training_set(cool.Cooler(parameters.hic_matrix))
     #print(resulty)
