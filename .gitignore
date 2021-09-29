@@ -9,3 +9,10 @@ notizen
 playground.py
 results/
 *.ini
+/h19_genes.bed
+ClusterTad/
+OnTAD/
+RandomSearch/
+TADLib/
+current_best/
+untitled_project/

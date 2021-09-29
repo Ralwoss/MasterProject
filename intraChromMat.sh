@@ -1,0 +1,25 @@
+#!/bin/sh
+cooler dump -r chr2 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr2
+#cooler dump -r chr3 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr3
+#cooler dump -r chr4 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr4
+#cooler dump -r chr5 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr5
+#cooler dump -r chr6 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr6
+#cooler dump -r chr7 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr7
+#cooler dump -r chr8 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr8
+#cooler dump -r chr9 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr9
+#cooler dump -r chr10 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr10
+#cooler dump -r chr11 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr11
+#cooler dump -r chr12 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr12
+#cooler dump -r chr13 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr13
+#cooler dump -r chr14 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr14
+#cooler dump -r chr15 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr15
+#cooler dump -r chr16 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr16
+#cooler dump -r chr17 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr17
+#cooler dump -r chr18 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr18
+#cooler dump -r chr19 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr19
+#cooler dump -r chr20 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr20
+#cooler dump -r chr21 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr21
+#cooler dump -r chr22 ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chr22
+#cooler dump -r chrX ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chrX
+#cooler dump -r chrY ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chrY
+#cooler dump -r chrM ./data/GM12878-MboI-allreps-filtered.10kb.cool > ./data/intraChromosomalMatrices/chrM

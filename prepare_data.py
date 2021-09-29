@@ -5,6 +5,7 @@ import math
 from os.path import exists as pexists
 from os.path import join as pjoin
 from os import mkdir
+import pyBigWig
 
 import parameters as pars
 
@@ -45,7 +46,7 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
             if (bound < pars.window_size / 2):
                 continue
             wstart = int(bound - int(pars.window_size / 2)) + offset
-            wend = int(bound + round(pars.window_size / 2)) + offset
+            wend = int(bound + math.ceil(pars.window_size / 2)) + offset
             if windows_bed:
                 windows.write(f"{chr}\t{(wstart-offset)*binsize}\t{(wend-offset-1)*binsize}\t{chr}_POS{count}\t1000\n")
             if found_boundaries_bed:
@@ -203,8 +204,34 @@ def save_as_npz(submats_pos, submats_neg, hic_cooler):
     np.savez(pars.interaction_matrices_neg_npz,
              train=submats_neg_train, val=submats_neg_val, test=submats_neg_test)
 
+def use_A_compartment(TAD_boundaries, PCAs):
+    """
 
-def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False):
+    :param TAD_boundaries: a dict with key:chromosomes and value:list of chromosomes
+    :param PCAs: a list with tuples of PCA.bigwig files and the chromosomes for which it has the compartments
+    :return: a new list of boundaries, with boundaries inside B-compartments removed
+    """
+
+    new_bounds = {}
+
+    for PCA in PCAs:
+        bw = pyBigWig.open(PCA[0])
+        for chrom in PCA[1]:
+            new_bounds[chrom] = []
+            for bound in TAD_boundaries[chrom]:
+                try: boundval = bw.stats(chrom, int(bound*pars.binsize), min(int((bound+1)*pars.binsize), bw.chroms(chrom)))
+                except:
+                    continue
+                if boundval[0] >= 0:
+                    new_bounds[chrom].append(bound)
+    return new_bounds
+
+
+
+
+
+
+def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False, usehicpca = False):
     """Prepares the data (submatrices, TAD-boundaries, windows) for later usage
 
     :param filepath_hicmatrix: String with path to the HIC-File in cooler format
@@ -239,6 +266,8 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False):
 
     # load hicmatrix
     c = cool.Cooler(filepath_hicmatrix)
+    m = c.matrix(balance = False)
+    print(m)
     binsize = c.binsize
 
     boundaries = {}
@@ -250,6 +279,8 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False):
             if cont[0] not in boundaries:  # make new entry for chrom in dict if chrom not in dict
                 boundaries[cont[0]] = [int(cont[1]) / binsize]  # Add first boundary
             boundaries[cont[0]].append((int(cont[2]) / binsize))  # append every end boundary of TAD
+
+    boundaries = use_A_compartment(boundaries, [["data/PC1.bigwig", pars.PC1], ["data/PC2.bigwig", pars.PC2]])
 
 
     windows.write("chrom\tchromStart\tchromEnd\tname\tscore\n")
