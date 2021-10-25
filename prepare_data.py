@@ -218,12 +218,19 @@ def use_A_compartment(TAD_boundaries, PCAs):
         bw = pyBigWig.open(PCA[0])
         for chrom in PCA[1]:
             new_bounds[chrom] = []
+            del_bounds = []
+            A_comp = pars.A_comp[chrom]
+            sign = 1
+            if A_comp == "neg":
+                sign = -1
             for bound in TAD_boundaries[chrom]:
                 try: boundval = bw.stats(chrom, int(bound*pars.binsize), min(int((bound+1)*pars.binsize), bw.chroms(chrom)))
                 except:
                     continue
-                if boundval[0] >= 0:
+                if sign * boundval[0] >= 0:
                     new_bounds[chrom].append(bound)
+                else:
+                    del_bounds.append(bound)
     return new_bounds
 
 
@@ -267,7 +274,6 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False, 
     # load hicmatrix
     c = cool.Cooler(filepath_hicmatrix)
     m = c.matrix(balance = False)
-    print(m)
     binsize = c.binsize
 
     boundaries = {}

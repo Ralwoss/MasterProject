@@ -52,8 +52,8 @@ def build_network(hp):
         model.add(tf.keras.layers.Dense(hp.Int(f"layer_{i}_units", min_value=32, max_value=256, step=32),
                               activation=hp.Choice(f"layer_{i}_activation", ["relu", "elu", "selu"])))
         if hp.Boolean(f"Dropout_{i}_bool"):
-            tf.keras.layers.Dropout(hp.Float(f"Dropout_Rate_{i}", min_value=0.05, max_value=0.5, step=0.05))
-        if hp.Boolean(f"Batch_normalization_{i}"):
+            model.add(tf.keras.layers.Dropout(hp.Float(f"Dropout_Rate_{i}", min_value=0.05, max_value=0.5, step=0.05)))
+        if hp.Boolean(f"Batch_norm_{i}"):
             model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
@@ -61,7 +61,7 @@ def build_network(hp):
 
     lr = hp.Float('learning_rate', min_value=1e-5, max_value=1e-2, sampling='LOG', default=1e-3)
     #compile the model
-    model.compile(optimizer=tf.keras.optimizers.SGD(lr),
+    model.compile(optimizer=tf.keras.optimizers.Adam(lr),
                   loss='binary_crossentropy',
                   metrics=METRICS)
 
@@ -161,7 +161,7 @@ def hyperparameter_opt(hp):
 if (__name__ == "__main__"):
     tuner = kt.BayesianOptimization(hyperparameter_opt,
                          objective="val_accuracy",
-                         max_trials=50,
+                         max_trials=100,
                          executions_per_trial=1,
                          overwrite=True,
                          project_name="RandomSearch")

@@ -1,6 +1,7 @@
 preparations/
 model/
 .idea/
+.idea
 __pycache__/
 data/
 *.png
@@ -16,3 +17,13 @@ RandomSearch/
 TADLib/
 current_best/
 untitled_project/
+.RData
+.RDataTmp
+.Rhistory
+.hitad/
+HiCDB.R
+Rao2014.txt
+eigenvectorInformation.txt
+matrices/
+meta.txt
+spectralTAD.R
