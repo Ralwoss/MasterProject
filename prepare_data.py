@@ -10,7 +10,7 @@ import pyBigWig
 import parameters as pars
 
 
-def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_bed=None):
+def make_train_data(hic_cooler, boundaries, windows_bed=None, center_bed=None, found_boundaries_bed=None):
     """
 
     :param hic_cooler: Cooler file with HIC interaction matrix
@@ -49,6 +49,7 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
             wend = int(bound + math.ceil(pars.window_size / 2)) + offset
             if windows_bed:
                 windows.write(f"{chr}\t{(wstart-offset)*binsize}\t{(wend-offset-1)*binsize}\t{chr}_POS{count}\t1000\n")
+
             if found_boundaries_bed:
                 found_boundaries.write(f"{chr}\t{int((bound-1)*binsize)}\t{int((bound+1)*binsize)}\n")
 
@@ -89,8 +90,11 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
             if label != 1:
                 #submat_neg.append(hic_matrix[wstart:wend, wstart:wend])
                 if windows_bed:
+                    centersize = 2 * pars.detection_range + 1
                     windows.write(f"{chr}\t{(wstart - offset) * binsize}\t{(wend - offset - 1) * binsize}\t"
                                   f"{chr}_NEG{count}\t0\n")
+                    center_bed.write(f"{chr}\t{(wstart - offset + int((pars.window_size - centersize) / 2)-1)*binsize}\t"
+                                     f"{(wend - offset - round((pars.window_size - centersize) / 2))*binsize}\n")
 
             wstart, wend = wstart + pars.window_size - pars.overlap_size, wend + pars.window_size - pars.overlap_size
             count += 1
@@ -98,7 +102,7 @@ def make_train_data(hic_cooler, boundaries, windows_bed=None, found_boundaries_b
 
 
 
-def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_boundaries_bed = None):
+def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, center_bed=None, found_boundaries_bed = None):
     """
 
     :param hic_cooler: Cooler file with HIC interaction matrix
@@ -159,6 +163,9 @@ def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_bou
                     if windows_bed:
                         windows.write(f"{chr}\t{(wstart-offset) * pars.binsize}\t{(wend - offset - 1) * pars.binsize}\t"
                                       f"{chr}_POS{poscount}\t1000\n")
+                        center_bed.write(f"{chr}\t{(wstart - offset + int((pars.window_size - centersize) / 2)-1)*binsize}\t"
+                                         f"{(wend-offset-round((pars.window_size - centersize) / 2))*binsize}\n")
+
                     if found_boundaries_bed:
                         found_boundaries.write(f"{chr}\t{int((bound - 1) * pars.binsize)}\t"
                                                f"{int((bound + 1) * pars.binsize)}\n")
@@ -166,8 +173,11 @@ def make_val_and_test_data(hic_cooler, boundaries, windows_bed = None, found_bou
             if (label != 1):
                 #submat_neg.append(hic_matrix[wstart:wend, wstart:wend])
                 if windows_bed:
+                    centersize = 2 * pars.detection_range + 1
                     windows.write(f"{chr}\t{(wstart - offset) * pars.binsize}\t{(wend - offset - 1) * pars.binsize}\t"
                                   f"{chr}_NEG{negcount}\t0\n")
+                    center_bed.write(f"{chr}\t{(wstart - offset + int((pars.window_size - centersize) / 2)-1)*binsize}\t"
+                                     f"{(wend - offset - round((pars.window_size - centersize) / 2))*binsize}\n")
                 negcount += 1
             wstart, wend = wstart + pars.window_size - pars.overlap_size, wend + pars.window_size - pars.overlap_size
 
@@ -251,7 +261,6 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False, 
     write_windows = write_windows
     window_size = pars.window_size
     overlap = pars.overlap_size
-    # binsize = pars.binsize
     windows = None
 
     if (overlap >= window_size):
@@ -270,6 +279,7 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False, 
     if (write_windows):
         windows = open(pjoin(pjoin("preparations", pars.save_preparation_id), "windows.bed"), "w")
         found_boundaries = open(pjoin(pjoin("preparations", pars.save_preparation_id), "foundboundaries.bed"), "w")
+        center = open(pjoin(pjoin("preparations", pars.save_preparation_id), "center.bed"), "w")
 
     # load hicmatrix
     c = cool.Cooler(filepath_hicmatrix)
@@ -291,14 +301,16 @@ def prepare_data(filepath_hicmatrix, filepath_TAD_domains, write_windows=False, 
 
     windows.write("chrom\tchromStart\tchromEnd\tname\tscore\n")
     found_boundaries.write("chrom\tchromStart\tchromEnd\tname\tscore\n")
+    center.write("chrom\tchromStart\tchromEnd\n")
 
     # gets all submatrices for validation and training datasets
-    make_val_and_test_data(c, boundaries, windows, found_boundaries)
-    make_train_data(c, boundaries, windows, found_boundaries)
+    make_val_and_test_data(c, boundaries, windows,center, found_boundaries)
+    make_train_data(c, boundaries, windows,center, found_boundaries)
 
     if (write_windows):
         windows.close()
         found_boundaries.close()
+        center.close()
 
 
 if __name__ == "__main__":

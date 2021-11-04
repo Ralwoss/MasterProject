@@ -159,17 +159,17 @@ def hyperparameter_opt(hp):
 
 
 if (__name__ == "__main__"):
-    tuner = kt.BayesianOptimization(hyperparameter_opt,
+    tuner = kt.Hyperband(hyperparameter_opt,
                          objective="val_accuracy",
-                         max_trials=100,
-                         executions_per_trial=1,
+                         max_epochs=100,
                          overwrite=True,
-                         project_name="RandomSearch")
+                         project_name="Hyperband")
 
     dg = data_generator.dataGenerator(cool.Cooler(pars.hic_matrix), pars.windows_bed, pars.TRAINCHORMS,
                                       balance_method="oversampling")
     validation_data = make_validation_set()
     tuner.search(dg, epochs=100, validation_data=validation_data)
+    tuner.results_summary()
 
 
     best_hps = tuner.get_best_hyperparameters(num_trials=3)[0]

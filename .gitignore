@@ -4,7 +4,7 @@ model/
 .idea
 __pycache__/
 data/
-*.png
+
 
 notizen
 playground.py
@@ -27,3 +27,7 @@ eigenvectorInformation.txt
 matrices/
 meta.txt
 spectralTAD.R
+/Hyperband
+model.info
+predicted_boundaries.bed
+
